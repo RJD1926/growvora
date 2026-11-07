@@ -2,7 +2,11 @@ import { createClient } from '@supabase/supabase-js';
 
 const CONFIG_STORAGE_KEY = 'growvora_supabase_config_v1';
 
-// Read config from environment variables or localStorage
+// Default Supabase project configuration
+const DEFAULT_SUPABASE_URL = 'https://kcyxuitejytjkvrceyjn.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_5mGcxPyDIDoS3iHhFstZmw_b2FUZzR4';
+
+// Read config from environment variables, localStorage, or defaults
 export const getSupabaseConfig = () => {
   try {
     const local = localStorage.getItem(CONFIG_STORAGE_KEY);
@@ -17,8 +21,8 @@ export const getSupabaseConfig = () => {
   }
 
   return {
-    url: import.meta.env.VITE_SUPABASE_URL || '',
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+    url: import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL,
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY
   };
 };
 
@@ -85,11 +89,15 @@ export const testSupabaseConnection = async () => {
 
     if (error) {
       // If table doesn't exist yet, message user with instructions
-      if (error.code === '42P01' || error.message.includes('relation "growvora_store" does not exist')) {
+      if (
+        error.code === '42P01' || 
+        error.code === 'PGRST205' || 
+        (error.message && error.message.toLowerCase().includes('growvora_store'))
+      ) {
         return {
           success: false,
           needsTable: true,
-          message: 'Connected to Supabase project, but "growvora_store" table is not created yet. Please run the SQL snippet in Supabase SQL Editor.'
+          message: 'Connected to your Supabase project! Please run the SQL snippet below in your Supabase SQL Editor to create the "growvora_store" table.'
         };
       }
       return { success: false, message: error.message };
@@ -100,3 +108,4 @@ export const testSupabaseConnection = async () => {
     return { success: false, message: err.message || 'Connection failed' };
   }
 };
+
