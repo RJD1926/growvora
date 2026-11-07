@@ -1,6 +1,20 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiArrowUpRight, FiPlay, FiTrendingUp, FiZap, FiShield } from 'react-icons/fi';
+import { 
+  FiArrowUpRight, 
+  FiPlay, 
+  FiTrendingUp, 
+  FiZap, 
+  FiShield,
+  FiGlobe,
+  FiLayers,
+  FiBriefcase,
+  FiUsers,
+  FiStar,
+  FiInbox,
+  FiLock,
+  FiCheckCircle
+} from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import Hero3DVisual from '../../components/3D/Hero3DVisual';
 import InteractiveServices from '../../components/Services/InteractiveServices';
@@ -9,12 +23,18 @@ import TeamCard from '../../components/TeamCard/TeamCard';
 import CTASection from '../../components/CTASection/CTASection';
 import VideoModal from '../../components/VideoModal/VideoModal';
 import { getProjects } from '../../data/projects';
-import { team } from '../../data/team';
+import { team, getTeam } from '../../data/team';
+import { getContent } from '../../admin/services/adminStorage';
 import './Home.scss';
 
 const Home = () => {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const projects = getProjects();
+  const teamMembers = getTeam ? getTeam() : team;
+  const siteContent = getContent ? getContent() : null;
+  const hero = siteContent?.hero || {};
+  const manifesto = siteContent?.manifesto || {};
+  const metrics = manifesto?.metrics || [];
 
   return (
     <div className="home-editorial-page">
@@ -139,6 +159,112 @@ const Home = () => {
         </div>
       </section>
 
+      {/* GrowVora Admin Module Showcase Section */}
+      <section className="editorial-admin-section" id="admin-module">
+        <div className="container">
+          <div className="admin-module-showcase-box">
+            <div className="admin-module-header-row">
+              <div>
+                <span className="label-micro">CONTROL ARCHITECTURE // LIVE SYSTEM</span>
+                <h2 className="editorial-title">
+                  GROWVORA <span className="highlight-text">ADMIN MODULE</span>
+                </h2>
+                <p className="admin-module-subtitle">
+                  Unified client & management control center to edit website content, update service offerings, publish case studies, manage the collective, review testimonials, and track client inquiries in real time.
+                </p>
+              </div>
+
+              <div className="admin-quick-access-card">
+                <div className="access-status-indicator">
+                  <span className="indicator-dot" />
+                  <span>SECURE GATEWAY // ENCRYPTED</span>
+                </div>
+                <Link to="/admin" className="launch-admin-btn">
+                  <FiLock />
+                  <span>Launch Admin Module</span>
+                  <FiArrowUpRight className="arrow" />
+                </Link>
+              </div>
+            </div>
+
+            {/* 6 Core Modules Grid */}
+            <div className="admin-submodules-grid">
+              <Link to="/admin" className="submodule-card">
+                <div className="module-icon-wrap electric">
+                  <FiGlobe />
+                </div>
+                <div className="module-meta">
+                  <span className="module-tag">MODULE 01</span>
+                  <h3>Website Content</h3>
+                  <p>Hero copy, brand manifesto philosophy, live metric counters, and studio contact points.</p>
+                </div>
+                <span className="module-arrow-link"><FiArrowUpRight /></span>
+              </Link>
+
+              <Link to="/admin" className="submodule-card">
+                <div className="module-icon-wrap cyan">
+                  <FiLayers />
+                </div>
+                <div className="module-meta">
+                  <span className="module-tag">MODULE 02</span>
+                  <h3>Services CMS</h3>
+                  <p>Create & modify agency service pillars, feature deliverables, routes, and public status.</p>
+                </div>
+                <span className="module-arrow-link"><FiArrowUpRight /></span>
+              </Link>
+
+              <Link to="/admin" className="submodule-card">
+                <div className="module-icon-wrap purple">
+                  <FiBriefcase />
+                </div>
+                <div className="module-meta">
+                  <span className="module-tag">MODULE 03</span>
+                  <h3>Projects & Work</h3>
+                  <p>Case study portfolio, cover visuals, engagement lifts, follower growth, and campaign tags.</p>
+                </div>
+                <span className="module-arrow-link"><FiArrowUpRight /></span>
+              </Link>
+
+              <Link to="/admin" className="submodule-card">
+                <div className="module-icon-wrap orange">
+                  <FiInbox />
+                </div>
+                <div className="module-meta">
+                  <span className="module-tag">MODULE 04</span>
+                  <h3>Inquiries & Leads</h3>
+                  <p>Real-time intake from contact forms, status tracking, budget tags, and internal notes.</p>
+                </div>
+                <span className="module-arrow-link"><FiArrowUpRight /></span>
+              </Link>
+
+              <Link to="/admin" className="submodule-card">
+                <div className="module-icon-wrap gold">
+                  <FiStar />
+                </div>
+                <div className="module-meta">
+                  <span className="module-tag">MODULE 05</span>
+                  <h3>Client Testimonials</h3>
+                  <p>Star ratings, client quotes, company avatars, scope delivered, and homepage featured status.</p>
+                </div>
+                <span className="module-arrow-link"><FiArrowUpRight /></span>
+              </Link>
+
+              <Link to="/admin" className="submodule-card">
+                <div className="module-icon-wrap electric">
+                  <FiUsers />
+                </div>
+                <div className="module-meta">
+                  <span className="module-tag">MODULE 06</span>
+                  <h3>Team Collective</h3>
+                  <p>Manage studio founders, directors, visual designers, reel researchers, and developers.</p>
+                </div>
+                <span className="module-arrow-link"><FiArrowUpRight /></span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Team Showcase Section */}
       <section className="editorial-team-section" id="team">
         <div className="container">
@@ -154,7 +280,7 @@ const Home = () => {
           </div>
 
           <div className="team-cards-grid">
-            {team.map((member, index) => (
+            {teamMembers.map((member, index) => (
               <TeamCard key={member.id} member={member} index={index} />
             ))}
           </div>

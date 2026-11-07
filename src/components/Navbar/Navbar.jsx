@@ -177,6 +177,15 @@ const Navbar = () => {
             >
               <span>About</span>
             </NavLink>
+
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => `nav-item nav-admin-item ${isActive ? 'is-active' : ''}`}
+              title="GrowVora Admin Module & Management Console"
+            >
+              <span>Admin</span>
+              <span className="nav-admin-badge">PORTAL</span>
+            </NavLink>
           </nav>
 
           {/* Right: Theme Toggle & Action Button */}
@@ -342,6 +351,16 @@ const Navbar = () => {
                 >
                   <span className="drawer-num">06</span>
                   <span className="drawer-text">Dashboard</span>
+                </NavLink>
+
+                <NavLink
+                  to="/admin"
+                  onClick={() => setIsOpen(false)}
+                  className={({ isActive }) => `drawer-link drawer-admin-link ${isActive ? 'active' : ''}`}
+                >
+                  <span className="drawer-num">07</span>
+                  <span className="drawer-text">Admin Module</span>
+                  <span className="drawer-badge">PORTAL</span>
                 </NavLink>
               </div>
 

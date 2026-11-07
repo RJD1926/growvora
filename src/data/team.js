@@ -50,3 +50,20 @@ export const team = [
     github: "https://github.com/BSS2707"
   }
 ];
+
+const ADMIN_TEAM_KEY = 'growvora_admin_team_v1';
+
+export const getTeam = () => {
+  try {
+    const adminTeamRaw = localStorage.getItem(ADMIN_TEAM_KEY);
+    if (adminTeamRaw) {
+      const parsed = JSON.parse(adminTeamRaw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+    return team;
+  } catch (error) {
+    return team;
+  }
+};

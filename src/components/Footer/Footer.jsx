@@ -52,6 +52,25 @@ const Footer = () => {
         
         <div className="footer-bottom">
           <p>© {new Date().getFullYear()} GrowVora Marketing Agency. All rights reserved.</p>
+          
+          <div className="developer-credit">
+            <span>Developed and Designed by : </span>
+            <a 
+              href="https://coderboyz.vercel.app" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="coderboyz-link"
+            >
+              CoderBoyz : coderboyz.vercel.app
+            </a>
+          </div>
+
+          <Link 
+            to="/admin" 
+            className="footer-admin-link"
+          >
+            Admin Portal
+          </Link>
         </div>
       </div>
     </footer>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
 import ScrollToTop from './components/ScrollToTop/ScrollToTop';
@@ -19,40 +19,58 @@ import Team from './pages/Team/Team';
 import Contact from './pages/Contact/Contact';
 import NotFound from './pages/NotFound/NotFound';
 import FAQChatbot from './components/FAQChatbot/FAQChatbot';
+import AdminApp from './admin/AdminApp';
+
+function AppContent({ isLoading, setIsLoading }) {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  return (
+    <>
+      {!isAdminRoute && <Custom3DCursor />}
+      <LoadingScreen onLoadingComplete={() => setIsLoading(false)} />
+      {!isAdminRoute && <Background3DCanvas />}
+      
+      <ScrollToTop />
+      <div 
+        className={`app-container ${isAdminRoute ? 'admin-mode' : ''}`} 
+        style={{ position: 'relative', zIndex: 1 }}
+      >
+        {!isAdminRoute && <Navbar />}
+        <main className={`main-content ${isAdminRoute ? 'admin-main-content' : ''}`}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/instagram-management" element={<InstagramManagement />} />
+            <Route path="/web-development" element={<WebDevelopment />} />
+            <Route path="/graphic-designing" element={<GraphicDesigning />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/:id" element={<ProjectDetails />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/team" element={<Team />} />
+            <Route path="/contact" element={<Contact />} />
+            
+            {/* Admin Panel Portal */}
+            <Route path="/admin/*" element={<AdminApp />} />
+            <Route path="/admin" element={<AdminApp />} />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+        {!isAdminRoute && <Footer />}
+        {!isAdminRoute && <FAQChatbot />}
+      </div>
+    </>
+  );
+}
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <>
-      <Custom3DCursor />
-      <LoadingScreen onLoadingComplete={() => setIsLoading(false)} />
-      <Background3DCanvas />
-      
-      <Router>
-        <ScrollToTop />
-        <div className="app-container" style={{ position: 'relative', zIndex: 1 }}>
-          <Navbar />
-          <main className="main-content">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/instagram-management" element={<InstagramManagement />} />
-              <Route path="/web-development" element={<WebDevelopment />} />
-              <Route path="/graphic-designing" element={<GraphicDesigning />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/projects/:id" element={<ProjectDetails />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/team" element={<Team />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-          <FAQChatbot />
-        </div>
-      </Router>
-    </>
+    <Router>
+      <AppContent isLoading={isLoading} setIsLoading={setIsLoading} />
+    </Router>
   );
 }
 

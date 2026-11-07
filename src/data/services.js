@@ -39,3 +39,20 @@ export const services = [
     icon: "design"
   }
 ];
+
+const ADMIN_SERVICES_KEY = 'growvora_admin_services_v1';
+
+export const getServices = () => {
+  try {
+    const adminRaw = localStorage.getItem(ADMIN_SERVICES_KEY);
+    if (adminRaw) {
+      const parsed = JSON.parse(adminRaw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+    return services;
+  } catch (error) {
+    return services;
+  }
+};

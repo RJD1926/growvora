@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FiMail, FiPhone, FiMapPin, FiCheckCircle } from 'react-icons/fi';
 import SectionTitle from '../../components/SectionTitle/SectionTitle';
 import Button from '../../components/Button/Button';
+import { addInquiry } from '../../admin/services/adminStorage';
 import './Contact.scss';
 
 const Contact = () => {
@@ -48,6 +49,22 @@ const Contact = () => {
     if (!validate()) return;
 
     try {
+      // Record inquiry in local storage for Admin Panel
+      try {
+        addInquiry({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          company: formData.company,
+          service: formData.service,
+          budget: formData.budget,
+          message: formData.message,
+          status: 'New'
+        });
+      } catch (storageErr) {
+        console.warn('Could not save inquiry to local storage', storageErr);
+      }
+
       const response = await fetch('https://formsubmit.co/ajax/novamanagement819@gmail.com', {
         method: 'POST',
         headers: {

@@ -292,9 +292,17 @@ export const projects = [
 ];
 
 const STORAGE_KEY = 'growvora_custom_projects';
+const ADMIN_PROJECTS_KEY = 'growvora_admin_projects_v1';
 
 export const getProjects = () => {
   try {
+    const adminProjectsRaw = localStorage.getItem(ADMIN_PROJECTS_KEY);
+    if (adminProjectsRaw) {
+      const parsed = JSON.parse(adminProjectsRaw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
     const customProjects = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     return [...projects, ...customProjects];
   } catch (error) {
@@ -304,11 +312,12 @@ export const getProjects = () => {
 
 export const saveProjects = (items) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  localStorage.setItem(ADMIN_PROJECTS_KEY, JSON.stringify(items));
 };
 
 export const addProject = (project) => {
-  const customProjects = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  const nextProjects = [...customProjects, project];
+  const current = getProjects();
+  const nextProjects = [project, ...current];
   saveProjects(nextProjects);
   return getProjects();
 };
