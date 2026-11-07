@@ -5,7 +5,8 @@ import {
   FiLogOut, 
   FiPlus, 
   FiCheckCircle, 
-  FiShield
+  FiShield,
+  FiCloud
 } from 'react-icons/fi';
 
 const sectionTitles = {
@@ -23,7 +24,8 @@ const AdminHeader = ({
   setIsMobileOpen, 
   onLogout,
   adminUser,
-  onQuickAdd
+  onQuickAdd,
+  onOpenCloudSync
 }) => {
   const current = sectionTitles[activeTab] || { title: 'Admin Panel', desc: 'GrowVora Digital Studio Management' };
 
@@ -59,6 +61,18 @@ const AdminHeader = ({
           >
             <FiPlus />
             <span>Create New</span>
+          </button>
+        )}
+
+        {onOpenCloudSync && (
+          <button 
+            type="button" 
+            className="admin-btn admin-btn-secondary admin-btn-sm header-cloud-btn"
+            onClick={onOpenCloudSync}
+            title="Configure Supabase Cloud Database"
+          >
+            <FiCloud />
+            <span className="hide-on-mobile">Cloud Sync</span>
           </button>
         )}
 

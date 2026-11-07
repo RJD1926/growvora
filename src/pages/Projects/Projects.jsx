@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch } from 'react-icons/fi';
 import ProjectCard from '../../components/ProjectCard/ProjectCard';
@@ -6,18 +6,25 @@ import ProjectModal from '../../components/ProjectModal/ProjectModal';
 import CTASection from '../../components/CTASection/CTASection';
 import SectionTitle from '../../components/SectionTitle/SectionTitle';
 import { getProjects } from '../../data/projects';
+import { subscribeToDataUpdates } from '../../admin/services/adminStorage';
 import './Projects.scss';
 
 const Projects = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const projects = getProjects();
-  
+  const [projectsList, setProjectsList] = useState(() => getProjects());
+
+  useEffect(() => {
+    return subscribeToDataUpdates(() => {
+      setProjectsList(getProjects());
+    });
+  }, []);
+
   const filters = ['All', 'Instagram', 'Web Development', 'Graphic Design', 'Branding'];
   
   const filteredProjects = useMemo(() => {
-    let result = projects;
+    let result = projectsList;
     
     // Apply category filter
     if (activeFilter !== 'All') {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   FiArrowUpRight, 
@@ -24,11 +24,19 @@ import CTASection from '../../components/CTASection/CTASection';
 import VideoModal from '../../components/VideoModal/VideoModal';
 import { getProjects } from '../../data/projects';
 import { team, getTeam } from '../../data/team';
-import { getContent } from '../../admin/services/adminStorage';
+import { getContent, subscribeToDataUpdates } from '../../admin/services/adminStorage';
 import './Home.scss';
 
 const Home = () => {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [, setDataVersion] = useState(0);
+
+  useEffect(() => {
+    return subscribeToDataUpdates(() => {
+      setDataVersion(v => v + 1);
+    });
+  }, []);
+
   const projects = getProjects();
   const teamMembers = getTeam ? getTeam() : team;
   const siteContent = getContent ? getContent() : null;

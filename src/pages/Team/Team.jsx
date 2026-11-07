@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import SectionTitle from '../../components/SectionTitle/SectionTitle';
 import TeamCard from '../../components/TeamCard/TeamCard';
 import CTASection from '../../components/CTASection/CTASection';
 import { team, getTeam } from '../../data/team';
+import { subscribeToDataUpdates } from '../../admin/services/adminStorage';
 
 const Team = () => {
-  const teamMembers = getTeam ? getTeam() : team;
+  const [teamMembers, setTeamMembers] = useState(() => (getTeam ? getTeam() : team));
+
+  useEffect(() => {
+    return subscribeToDataUpdates(() => {
+      setTeamMembers(getTeam ? getTeam() : team);
+    });
+  }, []);
 
   return (
     <div className="team-page pt-20">

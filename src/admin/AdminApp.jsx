@@ -18,6 +18,7 @@ import {
 import AdminSidebar from './components/AdminSidebar';
 import AdminHeader from './components/AdminHeader';
 import ConfirmModal from './components/ConfirmModal';
+import CloudSyncModal from './components/CloudSyncModal';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminContent from './pages/AdminContent';
@@ -36,6 +37,7 @@ const AdminApp = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
 
   // Live state from localStorage
   const [content, setContent] = useState(() => getContent());
@@ -132,6 +134,7 @@ const AdminApp = () => {
           onLogout={() => setIsLogoutModalOpen(true)}
           adminUser={adminUser}
           onQuickAdd={activeTab === 'dashboard' ? handleQuickAdd : null}
+          onOpenCloudSync={() => setIsCloudModalOpen(true)}
         />
 
         <main className="admin-content-area">
@@ -144,6 +147,7 @@ const AdminApp = () => {
               inquiries={inquiries}
               setActiveTab={setActiveTab}
               onResetDefaults={() => setIsResetModalOpen(true)}
+              onOpenCloudSync={() => setIsCloudModalOpen(true)}
             />
           )}
 
@@ -181,6 +185,12 @@ const AdminApp = () => {
         isDanger={true}
         onConfirm={handleConfirmReset}
         onClose={() => setIsResetModalOpen(false)}
+      />
+
+      {/* CLOUD DATABASE SYNC MODAL */}
+      <CloudSyncModal
+        isOpen={isCloudModalOpen}
+        onClose={() => setIsCloudModalOpen(false)}
       />
     </div>
   );

@@ -13,8 +13,10 @@ import {
   FiChevronRight,
   FiActivity,
   FiDatabase,
-  FiRefreshCw
+  FiRefreshCw,
+  FiCloud
 } from 'react-icons/fi';
+import { isSupabaseConfigured } from '../services/supabaseClient';
 import { 
   AreaChart, 
   Area, 
@@ -59,8 +61,10 @@ const AdminDashboard = ({
   testimonials = [], 
   inquiries = [], 
   setActiveTab,
-  onResetDefaults
+  onResetDefaults,
+  onOpenCloudSync
 }) => {
+  const hasCloud = isSupabaseConfigured();
   const newInquiries = inquiries.filter(i => i.status === 'New');
   const recentInquiries = inquiries.slice(0, 5);
   const recentProjects = projects.slice(0, 4);
@@ -330,22 +334,38 @@ const AdminDashboard = ({
             </button>
           </div>
 
-          {/* Local Persistence Box */}
+          {/* Cloud Database & Local Persistence Box */}
           <div className="storage-status-box">
             <div className="status-top">
-              <span className="storage-dot" />
-              <strong>Local Data Persistence Active</strong>
+              <span className={`storage-dot ${hasCloud ? 'cloud-active' : ''}`} />
+              <strong>{hasCloud ? 'Supabase Real-Time Cloud Sync Active' : 'Local Persistence (Offline Mode)'}</strong>
             </div>
-            <p>All CRUD modifications are synchronized immediately into browser localStorage.</p>
-            <button 
-              type="button" 
-              className="reset-defaults-link"
-              onClick={onResetDefaults}
-              title="Reset all demo data back to defaults"
-            >
-              <FiRefreshCw />
-              <span>Reset Demo Seed Data</span>
-            </button>
+            <p>
+              {hasCloud 
+                ? 'Your changes automatically sync to Supabase so visitors across mobile and desktop devices see updates in real-time.' 
+                : 'Modifications are saved locally. Connect Supabase to sync your changes so everyone on other laptops and phones sees them.'}
+            </p>
+            <div className="status-footer-actions">
+              {onOpenCloudSync && (
+                <button
+                  type="button"
+                  className="cloud-sync-trigger-btn"
+                  onClick={onOpenCloudSync}
+                >
+                  <FiCloud />
+                  <span>{hasCloud ? 'Cloud DB Settings' : 'Connect Cloud Database'}</span>
+                </button>
+              )}
+              <button 
+                type="button" 
+                className="reset-defaults-link"
+                onClick={onResetDefaults}
+                title="Reset all demo data back to defaults"
+              >
+                <FiRefreshCw />
+                <span>Reset Demo Seed Data</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

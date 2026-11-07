@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
@@ -6,6 +6,7 @@ import ScrollToTop from './components/ScrollToTop/ScrollToTop';
 import LoadingScreen from './components/LoadingScreen/LoadingScreen';
 import Background3DCanvas from './components/3D/Background3DCanvas';
 import Custom3DCursor from './components/3D/Custom3DCursor';
+import { initRealtimeSync, syncFromCloud } from './admin/services/adminStorage';
 
 import Home from './pages/Home/Home';
 import Dashboard from './pages/Dashboard/Dashboard';
@@ -24,6 +25,25 @@ import AdminApp from './admin/AdminApp';
 function AppContent({ isLoading, setIsLoading }) {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+
+  // Initialize Supabase Realtime synchronization across all devices
+  useEffect(() => {
+    initRealtimeSync();
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        syncFromCloud();
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+    };
+  }, []);
 
   return (
     <>

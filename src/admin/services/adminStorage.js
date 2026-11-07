@@ -1,11 +1,12 @@
 /**
- * GrowVora Admin Panel - Local Storage Data Manager
- * Direct integration with core data sources - No dummy names, no duplication
+ * GrowVora Admin Panel - Local Storage & Supabase Cloud Sync Manager
+ * Supports offline-first 0ms latency with automatic real-time cloud database sync
  */
 
 import { projects as baseProjects } from '../../data/projects';
 import { services as baseServices } from '../../data/services';
 import { team as baseTeam } from '../../data/team';
+import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 
 const STORAGE_KEYS = {
   CONTENT: 'growvora_admin_content_v1',
@@ -198,24 +199,189 @@ const getStorageItem = (key, fallback) => {
   }
 };
 
-// Generic save to localStorage
+// Generic save to localStorage with automatic background sync to Supabase
 const setStorageItem = (key, data) => {
   try {
     localStorage.setItem(key, JSON.stringify(data));
     dispatchDataUpdate(key);
+
+    // Sync to Supabase in background if configured
+    if (isSupabaseConfigured()) {
+      const supabase = getSupabase();
+      if (supabase) {
+        supabase
+          .from('growvora_store')
+          .upsert(
+            { key, value: data, updated_at: new Date().toISOString() },
+            { onConflict: 'key' }
+          )
+          .then(({ error }) => {
+            if (error) {
+              console.warn(`[Cloud Sync] Error syncing ${key}:`, error.message);
+            } else {
+              console.log(`[Cloud Sync] ${key} saved to cloud successfully.`);
+            }
+          })
+          .catch((err) => {
+            console.warn(`[Cloud Sync] Unexpected error syncing ${key}:`, err);
+          });
+      }
+    }
   } catch (e) {
     console.error(`Error saving ${key} to localStorage:`, e);
   }
 };
 
-/* WEBSITE CONTENT CRUD */
+/* =========================================================
+   CLOUD DATABASE SYNC METHODS
+   ========================================================= */
+
+// Download latest updates from Supabase cloud into local cache
+export const syncFromCloud = async () => {
+  if (!isSupabaseConfigured()) {
+    return { success: false, message: 'Cloud sync not configured yet.' };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return { success: false, message: 'Supabase client unavailable.' };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('growvora_store')
+      .select('key, value, updated_at');
+
+    if (error) {
+      console.warn('[Cloud Sync] Failed to fetch:', error.message);
+      return { success: false, message: error.message };
+    }
+
+    if (Array.isArray(data) && data.length > 0) {
+      let updatedCount = 0;
+      data.forEach((row) => {
+        if (row && row.key && row.value !== undefined) {
+          localStorage.setItem(row.key, JSON.stringify(row.value));
+          updatedCount++;
+        }
+      });
+
+      dispatchDataUpdate('CLOUD_SYNC_PULL');
+      return { success: true, count: updatedCount, message: `Synced ${updatedCount} modules from cloud database.` };
+    }
+
+    return { success: true, count: 0, message: 'Cloud database connected (no records yet).' };
+  } catch (err) {
+    return { success: false, message: err.message || 'Sync failed' };
+  }
+};
+
+// Upload all current local records to Supabase (1-click seed)
+export const pushAllToCloud = async () => {
+  if (!isSupabaseConfigured()) {
+    return { success: false, message: 'Supabase is not configured yet.' };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return { success: false, message: 'Supabase client unavailable.' };
+  }
+
+  try {
+    const records = [
+      { key: STORAGE_KEYS.CONTENT, value: getContent() },
+      { key: STORAGE_KEYS.SERVICES, value: getServices() },
+      { key: STORAGE_KEYS.PROJECTS, value: getProjects() },
+      { key: STORAGE_KEYS.TEAM, value: getTeam() },
+      { key: STORAGE_KEYS.TESTIMONIALS, value: getTestimonials() },
+      { key: STORAGE_KEYS.INQUIRIES, value: getInquiries() },
+    ];
+
+    const timestamp = new Date().toISOString();
+    const rows = records.map(r => ({
+      key: r.key,
+      value: r.value,
+      updated_at: timestamp
+    }));
+
+    const { error } = await supabase
+      .from('growvora_store')
+      .upsert(rows, { onConflict: 'key' });
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    return { success: true, message: 'All local records uploaded to Supabase cloud successfully!' };
+  } catch (err) {
+    return { success: false, message: err.message || 'Upload failed' };
+  }
+};
+
+// Auto-trigger sync check on initialization
+if (typeof window !== 'undefined' && isSupabaseConfigured()) {
+  syncFromCloud();
+}
+
+let realtimeChannel = null;
+
+// Initialize Supabase Realtime channel for live updates across all devices
+export const initRealtimeSync = () => {
+  if (typeof window === 'undefined' || !isSupabaseConfigured()) return null;
+  const supabase = getSupabase();
+  if (!supabase) return null;
+
+  // Immediate pull
+  syncFromCloud();
+
+  if (realtimeChannel) return realtimeChannel;
+
+  try {
+    realtimeChannel = supabase
+      .channel('growvora_public_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'growvora_store' },
+        (payload) => {
+          if (payload?.new && payload.new.key && payload.new.value !== undefined) {
+            localStorage.setItem(payload.new.key, JSON.stringify(payload.new.value));
+            dispatchDataUpdate(payload.new.key);
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Supabase Realtime] Connected to live updates channel.');
+        }
+      });
+
+    return realtimeChannel;
+  } catch (err) {
+    console.warn('[Supabase Realtime] Subscription error:', err);
+    return null;
+  }
+};
+
+// Helper to listen for live data changes across the app
+export const subscribeToDataUpdates = (callback) => {
+  if (typeof window === 'undefined') return () => {};
+  const handler = (e) => callback(e?.detail?.key);
+  window.addEventListener('growvora_data_updated', handler);
+  return () => window.removeEventListener('growvora_data_updated', handler);
+};
+
+/* =========================================================
+   WEBSITE CONTENT CRUD
+   ========================================================= */
 export const getContent = () => getStorageItem(STORAGE_KEYS.CONTENT, DEFAULT_CONTENT);
 export const saveContent = (contentData) => {
   setStorageItem(STORAGE_KEYS.CONTENT, contentData);
   return contentData;
 };
 
-/* SERVICES CRUD */
+/* =========================================================
+   SERVICES CRUD
+   ========================================================= */
 export const getServices = () => getStorageItem(STORAGE_KEYS.SERVICES, DEFAULT_SERVICES);
 export const addService = (newService) => {
   const services = getServices();
@@ -238,7 +404,9 @@ export const deleteService = (id) => {
   return updated;
 };
 
-/* PROJECTS CRUD */
+/* =========================================================
+   PROJECTS CRUD
+   ========================================================= */
 export const getProjects = () => getStorageItem(STORAGE_KEYS.PROJECTS, DEFAULT_PROJECTS);
 export const addProject = (newProject) => {
   const projects = getProjects();
@@ -261,7 +429,9 @@ export const deleteProject = (id) => {
   return updated;
 };
 
-/* TEAM CRUD */
+/* =========================================================
+   TEAM CRUD
+   ========================================================= */
 export const getTeam = () => getStorageItem(STORAGE_KEYS.TEAM, DEFAULT_TEAM);
 export const addTeamMember = (newMember) => {
   const team = getTeam();
@@ -284,7 +454,9 @@ export const deleteTeamMember = (id) => {
   return updated;
 };
 
-/* TESTIMONIALS CRUD */
+/* =========================================================
+   TESTIMONIALS CRUD
+   ========================================================= */
 export const getTestimonials = () => getStorageItem(STORAGE_KEYS.TESTIMONIALS, DEFAULT_TESTIMONIALS);
 export const addTestimonial = (newTestimonial) => {
   const testimonials = getTestimonials();
@@ -311,7 +483,9 @@ export const deleteTestimonial = (id) => {
   return updated;
 };
 
-/* INQUIRIES CRUD */
+/* =========================================================
+   INQUIRIES CRUD
+   ========================================================= */
 export const getInquiries = () => getStorageItem(STORAGE_KEYS.INQUIRIES, DEFAULT_INQUIRIES);
 export const addInquiry = (newInquiry) => {
   const inquiries = getInquiries();
@@ -341,7 +515,9 @@ export const deleteInquiry = (id) => {
   return updated;
 };
 
-/* RESET UTILITIES */
+/* =========================================================
+   RESET UTILITIES
+   ========================================================= */
 export const resetToDefaults = () => {
   localStorage.setItem(STORAGE_KEYS.CONTENT, JSON.stringify(DEFAULT_CONTENT));
   localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(DEFAULT_SERVICES));
@@ -350,5 +526,8 @@ export const resetToDefaults = () => {
   localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(DEFAULT_TESTIMONIALS));
   localStorage.setItem(STORAGE_KEYS.INQUIRIES, JSON.stringify(DEFAULT_INQUIRIES));
   dispatchDataUpdate('ALL_RESET');
+  if (isSupabaseConfigured()) {
+    pushAllToCloud();
+  }
   return true;
 };
