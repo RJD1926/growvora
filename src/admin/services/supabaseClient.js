@@ -2,10 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const CONFIG_STORAGE_KEY = 'growvora_supabase_config_v1';
 
-// Default Supabase project configuration
-const DEFAULT_SUPABASE_URL = 'https://kcyxuitejytjkvrceyjn.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_5mGcxPyDIDoS3iHhFstZmw_b2FUZzR4';
-
 // Read config from environment variables, localStorage, or defaults
 export const getSupabaseConfig = () => {
   try {
@@ -21,8 +17,8 @@ export const getSupabaseConfig = () => {
   }
 
   return {
-    url: import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL,
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY
+    url: import.meta.env.VITE_SUPABASE_URL || '',
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || ''
   };
 };
 
